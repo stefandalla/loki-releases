@@ -32,8 +32,11 @@ def validate(tag, assets):
 
 
 def main():
-    tag = os.environ['RELEASE_TAG']
-    assets = json.loads(os.environ['ASSETS_JSON'])
+    # Read inputs from the event file so signed download URLs are not echoed
+    # in the step's environment log.
+    event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+    tag = event['inputs']['release_tag']
+    assets = json.loads(event['inputs']['assets_json'])
     validate(tag, assets)
     draft = subprocess.check_output(['gh', 'release', 'view', tag, '--json', 'isDraft', '--jq', '.isDraft'], text=True).strip()
     if draft != 'true':
