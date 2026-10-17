@@ -1,0 +1,34 @@
+name: Transfer verified Windows installers
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing draft release tag
+        required: true
+        type: string
+      assets_json:
+        description: Four temporary GitHub asset URLs with names, sizes and SHA-256 digests
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: transfer-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify and transfer assets to existing draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          ASSETS_JSON: ${{ inputs.assets_json }}
+        run: python3 scripts/transfer-windows.py
